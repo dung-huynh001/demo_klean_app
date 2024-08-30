@@ -33,7 +33,7 @@ class Login extends StatelessWidget {
                       child: SvgPicture.asset(AppConfig.logo),
                     ),
                     Text(
-                      'Sign In',
+                      'Login',
                       style: Theme.of(context)
                           .textTheme
                           .headlineLarge
@@ -41,23 +41,14 @@ class Login extends StatelessWidget {
                     ),
                     h24,
                     Text(
-                      'Sign up with Open account',
+                      'Sign in with email address',
                       style: Theme.of(context)
                           .textTheme
                           .titleSmall
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                    h24,
                     h24,
                     const Divider(),
-                    h24,
-                    Text(
-                      'Or continue with email address',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
                     h16,
 
                     /// EMAIL TEXT FIELD
@@ -108,15 +99,9 @@ class Login extends StatelessWidget {
                     ),
                     h24,
 
-                    /// FOOTER TEXT
-                    Text(
-                      'This site is protected by reCAPTCHA and the Google Privacy Policy.',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    h24,
-
                     /// SIGNUP TEXT
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           'Don’t have an account?',

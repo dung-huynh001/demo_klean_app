@@ -19,7 +19,7 @@ class SignupForm extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Signup',
+                'Sign Up',
                 style: Theme.of(context)
                     .textTheme
                     .headlineLarge
@@ -27,23 +27,14 @@ class SignupForm extends StatelessWidget {
               ),
               h24,
               Text(
-                'Sign up with Open account',
+                'Sign up with email address',
                 style: Theme.of(context)
                     .textTheme
                     .titleSmall
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
-              h24,
               h24,
               const Divider(),
-              h24,
-              Text(
-                'Or continue with email address',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(fontWeight: FontWeight.bold),
-              ),
               h16,
 
               /// EMAIL FIELD
@@ -75,11 +66,6 @@ class SignupForm extends StatelessWidget {
                   onPressed: () {},
                   child: const Text('Continue'),
                 ),
-              ),
-              h24,
-              Text(
-                'This site is protected by reCAPTCHA and the Google Privacy Policy.',
-                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           ),

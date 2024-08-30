@@ -1,3 +1,4 @@
+import 'package:KleanApp/common/constants/sizes.dart';
 import 'package:KleanApp/responsive.dart';
 import 'package:KleanApp/common/constants/config.dart';
 import 'package:KleanApp/common/constants/defaults.dart';
@@ -47,53 +48,44 @@ class Register extends StatelessWidget {
               flex: 3,
               child: Column(
                 children: [
+                  /// SIGNUP FORM
+                  const Expanded(child: SignupForm()),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       /// APP LOGO
                       Responsive.isMobile(context)
                           ? Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppDefaults.padding,
-                          vertical: AppDefaults.padding * 1.5,
+                          vertical: AppDefaults.padding,
                         ),
                         child: SvgPicture.asset(AppConfig.logo),
                       )
                           : const SizedBox(),
-
-                      /// LOGIN TEXT
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDefaults.padding,
-                          vertical: AppDefaults.padding * 1.5,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text(
-                              'Already a member?',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(color: AppColors.textGrey),
-                            ),
-                            TextButton(
-                              style: TextButton.styleFrom(
-                                textStyle: const TextStyle(
-                                  color: AppColors.titleLight,
-                                ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Already a member?',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(color: AppColors.textGrey),
+                          ),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              textStyle: const TextStyle(
+                                color: AppColors.titleLight,
                               ),
-                              onPressed: () => context.go('/Login'),
-                              child: const Text('Login'),
                             ),
-                          ],
-                        ),
+                            onPressed: () => context.go('/Login'),
+                            child: const Text('Login'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-
-                  /// SIGNUP FORM
-                  const Expanded(child: SignupForm()),
                 ],
               ),
             ),

@@ -3,13 +3,61 @@ import 'package:KleanApp/common/constants/defaults.dart';
 import 'package:KleanApp/common/constants/sizes.dart';
 import 'package:KleanApp/common/constants/colors.dart';
 import 'package:KleanApp/common/constants/extensions.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:KleanApp/utils/request.dart';
+import 'package:KleanApp/utils/token_service.dart';
 
-class Login extends StatelessWidget {
+class Login extends StatefulWidget {
   const Login({super.key});
+
+  @override
+  _LoginState createState() => _LoginState();
+}
+
+class _LoginState extends State<Login> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  String? _emailError;
+  String? _passwordError;
+
+  void _login() async {
+    setState(() {
+      _emailError = _emailController.text.isEmpty ? 'Email is required' : null;
+      _passwordError = _passwordController.text.isEmpty ? 'Password is required' : null;
+    });
+
+    if (_emailError == null && _passwordError == null) {
+      try {
+        final request = Request();
+        final response = await request.post(
+          '/Auth/Login',
+          {
+            'Username': _emailController.text,
+            'Password': _passwordController.text,
+          },
+          null,
+        );
+
+        // Lưu token sau khi đăng nhập thành công
+        if (response != null && response['token'] != null) {
+          TokenService.saveToken(response['token']);
+          context.go('/home'); // Điều hướng đến trang home sau khi đăng nhập thành công
+        } else {
+          // Hiển thị thông báo lỗi nếu đăng nhập thất bại
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Login failed! Please try again')),
+          );
+        }
+      } catch (e) {
+        // Hiển thị thông báo lỗi nếu có exception
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Đã có lỗi xảy ra: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +101,7 @@ class Login extends StatelessWidget {
 
                     /// EMAIL TEXT FIELD
                     TextFormField(
+                      controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         prefixIcon: SvgPicture.asset(
@@ -61,20 +110,15 @@ class Login extends StatelessWidget {
                           width: 20,
                           fit: BoxFit.none,
                         ),
-                        suffixIcon: SvgPicture.asset(
-                          'assets/icons/check_filled.svg',
-                          width: 17,
-                          height: 11,
-                          fit: BoxFit.none,
-                          colorFilter: AppColors.success.toColorFilter,
-                        ),
                         hintText: 'Your email',
+                        errorText: _emailError,
                       ),
                     ),
                     h16,
 
                     /// PASSWORD TEXT FIELD
                     TextFormField(
+                      controller: _passwordController,
                       keyboardType: TextInputType.visiblePassword,
                       obscureText: true,
                       decoration: InputDecoration(
@@ -85,6 +129,7 @@ class Login extends StatelessWidget {
                           fit: BoxFit.none,
                         ),
                         hintText: 'Password',
+                        errorText: _passwordError,
                       ),
                     ),
                     h16,
@@ -93,7 +138,7 @@ class Login extends StatelessWidget {
                     SizedBox(
                       width: 296,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: _login,
                         child: const Text('Sign in'),
                       ),
                     ),

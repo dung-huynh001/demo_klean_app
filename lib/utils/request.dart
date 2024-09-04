@@ -1,25 +1,30 @@
+import 'package:KleanApp/utils/token_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class Request {
-  final String _baseUrl = 'https://localhost:7127';
+  final String _baseUrl = 'https://172.16.1.46:7127';
 
   Request();
 
   Future<dynamic> get(String endpoint, String? token) async {
     try {
-      final res = await http.get(
-        _buildUri(endpoint),
-        headers: _createHeaders(token)
-      );
-      return _handleResponse(res);
-    } catch(e) {
+      if(token != null && TokenService.isTokenValid(token) == false) {
+        return;
+      } 
+      final response =
+          await http.get(_buildUri(endpoint), headers: _createHeaders(token));
+      return _handleResponse(response);
+    } catch (e) {
       throw Exception('Error occurred during GET request: $e');
     }
   }
 
   Future<dynamic> post(String endpoint, dynamic body, String? token) async {
     try {
+      if(token != null && TokenService.isTokenValid(token) == false) {
+        return;
+      } 
       final response = await http.post(
         _buildUri(endpoint),
         headers: _createHeaders(token),
@@ -33,6 +38,9 @@ class Request {
 
   Future<dynamic> put(String endpoint, dynamic body, String? token) async {
     try {
+      if(token != null && TokenService.isTokenValid(token) == false) {
+        return;
+      } 
       final response = await http.put(
         _buildUri(endpoint),
         headers: _createHeaders(token),
@@ -46,6 +54,9 @@ class Request {
 
   Future<dynamic> patch(String endpoint, dynamic body, String? token) async {
     try {
+      if(token != null && TokenService.isTokenValid(token) == false) {
+        return;
+      } 
       final response = await http.patch(
         _buildUri(endpoint),
         headers: _createHeaders(token),
@@ -59,6 +70,9 @@ class Request {
 
   Future<dynamic> delete(String endpoint, dynamic body, String? token) async {
     try {
+      if(token != null && TokenService.isTokenValid(token) == false) {
+        return;
+      } 
       final response = await http.delete(
         _buildUri(endpoint),
         headers: _createHeaders(token),

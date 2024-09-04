@@ -32,10 +32,10 @@ class _LoginState extends State<Login> {
       try {
         final request = Request();
         final response = await request.post(
-          '/Auth/Login',
+          'api/Auth/Login',
           {
-            'Username': _emailController.text,
-            'Password': _passwordController.text,
+            'username': _emailController.text,
+            'password': _passwordController.text,
           },
           null,
         );
@@ -43,7 +43,7 @@ class _LoginState extends State<Login> {
         // Lưu token sau khi đăng nhập thành công
         if (response != null && response['token'] != null) {
           TokenService.saveToken(response['token']);
-          context.go('/home'); // Điều hướng đến trang home sau khi đăng nhập thành công
+          context.go('/'); // Điều hướng đến trang home sau khi đăng nhập thành công
         } else {
           // Hiển thị thông báo lỗi nếu đăng nhập thất bại
           ScaffoldMessenger.of(context).showSnackBar(

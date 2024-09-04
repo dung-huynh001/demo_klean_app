@@ -1,7 +1,16 @@
 import 'package:KleanApp/pages/entry_point.dart';
 import 'package:KleanApp/pages/login/login.dart';
 import 'package:KleanApp/pages/register/register.dart';
+import 'package:KleanApp/utils/token_service.dart';
 import 'package:go_router/go_router.dart';
+
+Future<String?> redirectTo() async {
+  String token = await TokenService.getToken() ?? "";
+  if (TokenService.isTokenValid(token) == false) {
+    return '/login';
+  }
+  return null;
+}
 
 final routerConfig = GoRouter(
   initialLocation: '/',
@@ -9,6 +18,7 @@ final routerConfig = GoRouter(
     GoRoute(
       path: '/',
       builder: (context, state) => const EntryPoint(),
+      redirect: (context, state) async => await redirectTo()
     ),
     GoRoute(
       path: '/login',

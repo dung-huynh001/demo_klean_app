@@ -21,7 +21,23 @@ class TokenService {
   }
 
   static Map<String, dynamic>? decodingToken(String token) {
-    return JwtDecoder.tryDecode(token);
+    Map<String, dynamic>? decodedToken = JwtDecoder.tryDecode(token);
+    Map<String, dynamic>? result = {};
+    if (decodedToken != null) {
+      decodedToken.forEach((key, value) {
+        if (key.contains('claims/nameidentifier')) {
+          result['nameidentifier'] = value;
+        } else if (key.contains('claims/name')) {
+          result['username'] = value;
+        } else if (key.contains('claims/role')) {
+          result['role'] = value;
+        } else {
+          result[key] = value;
+        }
+      });
+      return result;
+    }
+    return null;
   }
 
   static bool isTokenValid(String token) {

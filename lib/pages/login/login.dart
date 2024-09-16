@@ -53,7 +53,7 @@ class _LoginState extends State<Login> {
       } catch (e) {
         // Hiển thị thông báo lỗi nếu có exception
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Đã có lỗi xảy ra: $e')),
+          SnackBar(content: Text('Errors occurred: $e')),
         );
       }
     }
@@ -89,7 +89,7 @@ class _LoginState extends State<Login> {
                     ),
                     h24,
                     Text(
-                      'Sign in with email address',
+                      'Sign in with your account',
                       style: Theme.of(context)
                           .textTheme
                           .titleSmall
@@ -104,13 +104,9 @@ class _LoginState extends State<Login> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        prefixIcon: SvgPicture.asset(
-                          'assets/icons/mail_light.svg',
-                          height: 16,
-                          width: 20,
-                          fit: BoxFit.none,
-                        ),
-                        hintText: 'Your email',
+                        labelText: "Username",
+                        prefixIcon: const Icon(Icons.person),
+                        hintText: 'Enter username',
                         errorText: _emailError,
                       ),
                     ),
@@ -122,13 +118,9 @@ class _LoginState extends State<Login> {
                       keyboardType: TextInputType.visiblePassword,
                       obscureText: true,
                       decoration: InputDecoration(
-                        prefixIcon: SvgPicture.asset(
-                          'assets/icons/lock_light.svg',
-                          height: 16,
-                          width: 20,
-                          fit: BoxFit.none,
-                        ),
-                        hintText: 'Password',
+                        labelText: "Password",
+                        prefixIcon: const Icon(Icons.lock),
+                        hintText: 'Enter password',
                         errorText: _passwordError,
                       ),
                     ),

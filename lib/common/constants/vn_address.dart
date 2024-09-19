@@ -1,8 +1,8 @@
 class SuburbType {
-    int id;
-    String name;
-    String postCode;
-    SuburbType(this.id, this.name, this.postCode);
+  int id;
+  String name;
+  String postCode;
+  SuburbType(this.id, this.name, this.postCode);
 }
 
 class StateType {
@@ -39,19 +39,26 @@ class VNAddress {
   ];
 
   static List<Map<String, dynamic>> getStates() {
-    return address.map((state) => {
-      'id': state.id,
-      'state': state.state
-    }).toList();
+    return address
+        .map((state) => {'id': state.id, 'state': state.state})
+        .toList();
   }
 
   static List<Map<String, dynamic>> getSuburbs(int? stateId) {
     StateType st = address.firstWhere((s) => s.id == stateId);
-    return st.suburbs.map((sub) => {
-      'id': sub.id,
-      'name': sub.name,
-      'postCode': sub.postCode
-    }).toList();
+    return st.suburbs
+        .map(
+            (sub) => {'id': sub.id, 'name': sub.name, 'postCode': sub.postCode})
+        .toList();
   }
 
+  static String? getPostCode(int stateId, int suburbId) {
+    try {
+      StateType st = address.firstWhere((s) => s.id == stateId);
+      SuburbType sub = st.suburbs.firstWhere((sb) => sb.id == suburbId);
+      return sub.postCode;
+    } catch (e) {
+      return null;
+    }
+  }
 }

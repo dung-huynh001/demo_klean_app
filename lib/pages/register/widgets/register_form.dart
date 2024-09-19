@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:KleanApp/common/constants/vn_address.dart';
@@ -22,6 +24,7 @@ class _SignupFormState extends State<SignupForm> {
   int _step = 1;
   int? _addressState;
   int? _addressSuburb;
+  String? _postCode;
   DateTime? _dateOfBirth;
   List<Map<String, dynamic>>? _suburbs;
   final List<Map<String, dynamic>> _states = VNAddress.getStates();
@@ -31,6 +34,7 @@ class _SignupFormState extends State<SignupForm> {
   String? _usernameError;
   String? _passwordError;
   String? _confirmPasswordError;
+  String? _dobError;
 
   bool _isInputValid(String val, {int minLength = 8}) =>
       val.isNotEmpty && val.length >= minLength;
@@ -57,25 +61,49 @@ class _SignupFormState extends State<SignupForm> {
       _usernameError = null;
       _passwordError = null;
       _confirmPasswordError = null;
+      _dobError = null;
 
-      if (_step == 1 && _isInputValid(_userIdController.text)) {
-        _step++;
-      } else if (_step == 1) {
-        _userIdError = 'User ID is required and must be 8 characters.';
-      } else if (_step == 2 && _isInputValid(_usernameController.text)) {
-        _step++;
-      } else if (_step == 2) {
-        _usernameError =
-            'Username is required and must be at least 8 characters.';
-      } else if (_step == 3 && _isInputValid(_passwordController.text)) {
-        if (_passwordController.text == _confirmPasswordController.text) {
+      switch (_step) {
+        case 1:
+          if (!_isInputValid(_userIdController.text)) {
+            _userIdError = 'User ID is required and must be 8 characters.';
+            break;
+          }
           _step++;
-        } else {
-          _confirmPasswordError = 'Passwords do not match.';
-        }
-      } else if (_step == 3) {
-        _passwordError =
-            'Password is required and must be at least 8 characters.';
+          break;
+
+        case 2:
+          if (!_isInputValid(_usernameController.text)) {
+            _usernameError =
+                'Username is required and must be at least 8 characters.';
+            break;
+          }
+          _step++;
+          break;
+
+        case 3:
+          if (!_isInputValid(_passwordController.text)) {
+            _passwordError =
+                'Password is required and must be at least 8 characters.';
+            break;
+          }
+          if (_passwordController.text != _confirmPasswordController.text) {
+            _confirmPasswordError = 'Passwords do not match.';
+            break;
+          }
+          _step++;
+          break;
+
+        case 4:
+          if (_dateOfBirth == null) {
+            _dobError = 'Date of birth is required.';
+            break;
+          }
+          _step++;
+          break;
+
+        default:
+          break;
       }
     });
   }
@@ -107,15 +135,25 @@ class _SignupFormState extends State<SignupForm> {
                       ?.copyWith(fontWeight: FontWeight.bold)),
               h16,
               const Divider(),
-              h16,
-              if (_step == 1) _buildUserIdField(),
-              if (_step == 2) _buildUsernameField(),
-              if (_step == 3) _buildPasswordFields(),
-              if (_step == 4) _buildDOBField(),
-              if (_step == 5) _buildAddressField(),
+              if (_step > 1) _buildPreviousButton(),
+              SizedBox(
+                height: 200,
+                width: 296,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    h16,
+                    if (_step == 1) _buildUserIdField(),
+                    if (_step == 2) _buildUsernameField(),
+                    if (_step == 3) _buildPasswordFields(),
+                    if (_step == 4) _buildDOBField(),
+                    if (_step == 5) _buildAddressField(),
+                  ],
+                ),
+              ),
               h24,
               _buildContinueButton(),
-              if (_step > 1) _buildPreviousButton(),
             ],
           ),
         ),
@@ -128,23 +166,44 @@ class _SignupFormState extends State<SignupForm> {
     required String label,
     required String hintText,
     required IconData icon,
+    bool obscureText = false,
     int? maxLength,
     String? errorMessage,
-    TextInputType keyboardType = TextInputType.none,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLength: maxLength,
+      obscureText: obscureText && !_visiblePassword,
+      onEditingComplete: () {
+        FocusScope.of(context).unfocus();
+      },
+      onTapOutside: (pointer) {
+        FocusScope.of(context).unfocus();
+      },
       decoration: InputDecoration(
         labelText: label,
         hintText: hintText,
         prefixIcon: Icon(icon),
         border: const OutlineInputBorder(),
         errorText: errorMessage,
+        suffixIcon: obscureText
+            ? IconButton(
+                onPressed: () {
+                  setState(() {
+                    _visiblePassword = !_visiblePassword;
+                  });
+                },
+                icon: Icon(
+                    _visiblePassword ? Icons.visibility_off : Icons.visibility))
+            : null,
       ),
     );
   }
+
+  bool _visiblePassword = false;
+  bool _visibleConfirmPassword = false;
 
   Widget _buildUserIdField() {
     return _buildInputField(
@@ -165,6 +224,7 @@ class _SignupFormState extends State<SignupForm> {
       hintText: 'Enter username',
       icon: Icons.person,
       errorMessage: _usernameError,
+      keyboardType: TextInputType.text,
     );
   }
 
@@ -172,22 +232,60 @@ class _SignupFormState extends State<SignupForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInputField(
+        TextFormField(
           controller: _passwordController,
-          label: 'Password',
-          hintText: 'Enter password',
-          icon: Icons.lock,
-          errorMessage: _passwordError,
           keyboardType: TextInputType.visiblePassword,
+          obscureText: !_visiblePassword,
+          onEditingComplete: () {
+            FocusScope.of(context).unfocus();
+          },
+          onTapOutside: (pointer) {
+            FocusScope.of(context).unfocus();
+          },
+          decoration: InputDecoration(
+            labelText: "Password",
+            hintText: "Enter password",
+            prefixIcon: const Icon(Icons.lock),
+            border: const OutlineInputBorder(),
+            errorText: _passwordError,
+            suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _visiblePassword = !_visiblePassword;
+                  });
+                },
+                icon: Icon(_visiblePassword
+                    ? Icons.visibility_off
+                    : Icons.visibility)),
+          ),
         ),
         h16,
-        _buildInputField(
+        TextFormField(
           controller: _confirmPasswordController,
-          label: 'Confirm Password',
-          hintText: 'Re-enter password',
-          icon: Icons.lock,
-          errorMessage: _confirmPasswordError,
           keyboardType: TextInputType.visiblePassword,
+          obscureText: !_visibleConfirmPassword,
+          onEditingComplete: () {
+            FocusScope.of(context).unfocus();
+          },
+          onTapOutside: (pointer) {
+            FocusScope.of(context).unfocus();
+          },
+          decoration: InputDecoration(
+            labelText: "Confirm Password",
+            hintText: "Re-enter password",
+            prefixIcon: const Icon(Icons.lock),
+            border: const OutlineInputBorder(),
+            errorText: _confirmPasswordError,
+            suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _visibleConfirmPassword = !_visibleConfirmPassword;
+                  });
+                },
+                icon: Icon(_visibleConfirmPassword
+                    ? Icons.visibility_off
+                    : Icons.visibility)),
+          ),
         ),
       ],
     );
@@ -197,11 +295,12 @@ class _SignupFormState extends State<SignupForm> {
     return TextFormField(
       controller: _dateOfBirthController,
       readOnly: true,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: "Date of Birth",
         hintText: 'Select your date of birth',
-        suffixIcon: Icon(Icons.calendar_today),
-        border: OutlineInputBorder(),
+        errorText: _dobError,
+        suffixIcon: const Icon(Icons.calendar_today),
+        border: const OutlineInputBorder(),
       ),
       onTap: () => _pickDOB(context),
     );
@@ -209,6 +308,8 @@ class _SignupFormState extends State<SignupForm> {
 
   Widget _buildAddressField() {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         DropdownButton(
           value: _addressState,
@@ -222,23 +323,27 @@ class _SignupFormState extends State<SignupForm> {
             setState(() {
               _addressState = val as int?;
               _suburbs = VNAddress.getSuburbs(_addressState);
+              _addressSuburb = null;
             });
           },
         ),
         h16,
-        if (_suburbs != null)
-          DropdownButton(
-            value: _addressSuburb,
-            isExpanded: true,
-            hint: const Text('Select suburb'),
-            items: _suburbs
-                ?.map((suburb) => DropdownMenuItem(
-                    value: suburb['id'], child: Text(suburb['name'])))
-                .toList(),
-            onChanged: (val) {
-              setState(() => _addressSuburb = val as int?);
-            },
-          ),
+        DropdownButton(
+          value: _addressSuburb,
+          isExpanded: true,
+          hint: const Text('Select suburb'),
+          items: _suburbs
+              ?.map((suburb) => DropdownMenuItem(
+                  value: suburb['id'], child: Text(suburb['name'])))
+              .toList(),
+          onChanged: (val) {
+            setState(() {
+              _addressSuburb = val as int?;
+              _postCode =
+                  VNAddress.getPostCode(_addressState!, _addressSuburb!);
+            });
+          },
+        ),
       ],
     );
   }
@@ -246,8 +351,19 @@ class _SignupFormState extends State<SignupForm> {
   Widget _buildContinueButton() {
     return SizedBox(
       width: 296,
-      child:
-          ElevatedButton(onPressed: _nextStep, child: const Text('Continue')),
+      child: _step < 5
+          ? ElevatedButton(
+              onPressed: () {
+                FocusScope.of(context).unfocus();
+                _nextStep();
+              },
+              child: const Text('Continue'))
+          : ElevatedButton(
+              onPressed: () {
+                FocusScope.of(context).unfocus();
+                _handleSubmit();
+              },
+              child: const Text('Submit')),
     );
   }
 
@@ -255,9 +371,15 @@ class _SignupFormState extends State<SignupForm> {
     return TextButton.icon(
       onPressed: _prevStep,
       icon: const Icon(Icons.arrow_back),
-      label: const Text('Previous',
+      label: const Text('Back',
           style:
               TextStyle(color: Colors.black, decoration: TextDecoration.none)),
     );
+  }
+
+  void _handleSubmit() {
+    print("state: $_addressState");
+    print("suburb: $_addressSuburb");
+    print("postcode: $_postCode");
   }
 }

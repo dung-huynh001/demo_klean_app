@@ -1,10 +1,12 @@
+import 'dart:convert';
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:KleanApp/common/constants/vn_address.dart';
 import 'package:KleanApp/common/constants/sizes.dart';
 import 'package:KleanApp/common/constants/colors.dart';
+import 'package:KleanApp/utils/request.dart';
 
 class SignupForm extends StatefulWidget {
   const SignupForm({Key? key}) : super(key: key);
@@ -20,6 +22,8 @@ class _SignupFormState extends State<SignupForm> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final TextEditingController _dateOfBirthController = TextEditingController();
+  final TextEditingController _addressDetailController =
+      TextEditingController();
 
   int _step = 1;
   int? _addressState;
@@ -35,9 +39,11 @@ class _SignupFormState extends State<SignupForm> {
   String? _passwordError;
   String? _confirmPasswordError;
   String? _dobError;
+  String? _addressDetailError;
 
-  bool _isInputValid(String val, {int minLength = 8}) =>
-      val.isNotEmpty && val.length >= minLength;
+  bool _isInputValid(String val, {int minLength = 8}) {
+    return val.isNotEmpty && val.length >= minLength;
+  }
 
   Future<void> _pickDOB(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -54,62 +60,96 @@ class _SignupFormState extends State<SignupForm> {
     }
   }
 
-  void _nextStep() {
+  void _clearErrors() {
     setState(() {
-      // Reset validation messages
       _userIdError = null;
       _usernameError = null;
       _passwordError = null;
       _confirmPasswordError = null;
       _dobError = null;
+      _addressDetailError = null;
+    });
+  }
 
-      switch (_step) {
-        case 1:
-          if (!_isInputValid(_userIdController.text)) {
-            _userIdError = 'User ID is required and must be 8 characters.';
-            break;
-          }
+  bool _isStepValid() {
+    switch (_step) {
+      case 1:
+        if (!_isInputValid(_userIdController.text)) {
+          _userIdError = 'User ID is required and must be 8 characters.';
+          return false;
+        }
+        break;
+
+      case 2:
+        if (!_isInputValid(_usernameController.text)) {
+          _usernameError =
+              'Username is required and must be at least 8 characters.';
+          return false;
+        }
+        break;
+
+      case 3:
+        if (!_isInputValid(_passwordController.text)) {
+          _passwordError =
+              'Password is required and must be at least 8 characters.';
+          return false;
+        }
+        if (_passwordController.text != _confirmPasswordController.text) {
+          _confirmPasswordError = 'Passwords do not match.';
+          return false;
+        }
+        break;
+
+      case 4:
+        if (_dateOfBirth == null) {
+          _dobError = 'Date of birth is required.';
+          return false;
+        }
+        break;
+
+      case 5:
+        if (_addressDetailController.text.isEmpty) {
+          _addressDetailError = 'Address detail is required';
+          return false;
+        }
+        _handleSubmit();
+        break;
+    }
+
+    return true;
+  }
+
+  void _nextStep() {
+    setState(() {
+      // Reset validation messages
+      _clearErrors();
+      if (_isStepValid() && _step < 5) {
+        setState(() {
           _step++;
-          break;
-
-        case 2:
-          if (!_isInputValid(_usernameController.text)) {
-            _usernameError =
-                'Username is required and must be at least 8 characters.';
-            break;
-          }
-          _step++;
-          break;
-
-        case 3:
-          if (!_isInputValid(_passwordController.text)) {
-            _passwordError =
-                'Password is required and must be at least 8 characters.';
-            break;
-          }
-          if (_passwordController.text != _confirmPasswordController.text) {
-            _confirmPasswordError = 'Passwords do not match.';
-            break;
-          }
-          _step++;
-          break;
-
-        case 4:
-          if (_dateOfBirth == null) {
-            _dobError = 'Date of birth is required.';
-            break;
-          }
-          _step++;
-          break;
-
-        default:
-          break;
+        });
       }
     });
   }
 
   void _prevStep() {
     if (_step > 1) setState(() => _step--);
+  }
+
+  Widget _buildStepFields() {
+    switch (_step) {
+      case 1:
+        return _buildUserIdField();
+      case 2:
+        return _buildUsernameField();
+      case 3:
+        return _buildPasswordFields();
+      case 4:
+        return _buildDOBField();
+      case 5:
+        return _buildAddressField();
+      default:
+        return Container();
+    }
   }
 
   @override
@@ -137,19 +177,12 @@ class _SignupFormState extends State<SignupForm> {
               const Divider(),
               if (_step > 1) _buildPreviousButton(),
               SizedBox(
-                height: 200,
+                height: 240,
                 width: 296,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    h16,
-                    if (_step == 1) _buildUserIdField(),
-                    if (_step == 2) _buildUsernameField(),
-                    if (_step == 3) _buildPasswordFields(),
-                    if (_step == 4) _buildDOBField(),
-                    if (_step == 5) _buildAddressField(),
-                  ],
+                  children: [h16, _buildStepFields()],
                 ),
               ),
               h24,
@@ -166,21 +199,23 @@ class _SignupFormState extends State<SignupForm> {
     required String label,
     required String hintText,
     required IconData icon,
-    bool obscureText = false,
     int? maxLength,
     String? errorMessage,
     TextInputType keyboardType = TextInputType.text,
+    Function? onValid,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLength: maxLength,
-      obscureText: obscureText && !_visiblePassword,
       onEditingComplete: () {
         FocusScope.of(context).unfocus();
       },
       onTapOutside: (pointer) {
         FocusScope.of(context).unfocus();
+      },
+      onChanged: (val) {
+        onValid != null ? onValid() : null;
       },
       decoration: InputDecoration(
         labelText: label,
@@ -188,15 +223,11 @@ class _SignupFormState extends State<SignupForm> {
         prefixIcon: Icon(icon),
         border: const OutlineInputBorder(),
         errorText: errorMessage,
-        suffixIcon: obscureText
-            ? IconButton(
-                onPressed: () {
-                  setState(() {
-                    _visiblePassword = !_visiblePassword;
-                  });
-                },
-                icon: Icon(
-                    _visiblePassword ? Icons.visibility_off : Icons.visibility))
+        suffixIcon: controller.text.isNotEmpty && _isInputValid(controller.text)
+            ? const Icon(
+                Icons.check,
+                color: AppColors.success,
+              )
             : null,
       ),
     );
@@ -207,25 +238,29 @@ class _SignupFormState extends State<SignupForm> {
 
   Widget _buildUserIdField() {
     return _buildInputField(
-      controller: _userIdController,
-      label: 'User ID',
-      hintText: 'Enter 8-digit ID',
-      icon: Icons.verified_user_sharp,
-      errorMessage: _userIdError,
-      keyboardType: TextInputType.number,
-      maxLength: 8,
-    );
+        controller: _userIdController,
+        label: 'User ID',
+        hintText: 'Enter 8-digit ID',
+        icon: Icons.verified_user_sharp,
+        errorMessage: _userIdError,
+        keyboardType: TextInputType.number,
+        maxLength: 8,
+        onValid: () => setState(() {
+              _userIdError = null;
+            }));
   }
 
   Widget _buildUsernameField() {
     return _buildInputField(
-      controller: _usernameController,
-      label: 'Username',
-      hintText: 'Enter username',
-      icon: Icons.person,
-      errorMessage: _usernameError,
-      keyboardType: TextInputType.text,
-    );
+        controller: _usernameController,
+        label: 'Username',
+        hintText: 'Enter username',
+        icon: Icons.person,
+        errorMessage: _usernameError,
+        keyboardType: TextInputType.text,
+        onValid: () => setState(() {
+              _usernameError = null;
+            }));
   }
 
   Widget _buildPasswordFields() {
@@ -315,6 +350,7 @@ class _SignupFormState extends State<SignupForm> {
           value: _addressState,
           isExpanded: true,
           hint: const Text('Select state'),
+          icon: const Icon(Icons.location_on),
           items: _states
               .map((state) => DropdownMenuItem(
                   value: state['id'], child: Text(state['state'])))
@@ -332,6 +368,7 @@ class _SignupFormState extends State<SignupForm> {
           value: _addressSuburb,
           isExpanded: true,
           hint: const Text('Select suburb'),
+          icon: const Icon(Icons.location_on),
           items: _suburbs
               ?.map((suburb) => DropdownMenuItem(
                   value: suburb['id'], child: Text(suburb['name'])))
@@ -344,27 +381,30 @@ class _SignupFormState extends State<SignupForm> {
             });
           },
         ),
+        h16,
+        _buildInputField(
+            controller: _addressDetailController,
+            hintText: 'Enter address detail',
+            icon: Icons.map,
+            label: 'Details',
+            errorMessage: _addressDetailError,
+            onValid: () => setState(() {
+                  _addressDetailError = null;
+                })),
+        h16,
       ],
     );
   }
 
   Widget _buildContinueButton() {
     return SizedBox(
-      width: 296,
-      child: _step < 5
-          ? ElevatedButton(
-              onPressed: () {
-                FocusScope.of(context).unfocus();
-                _nextStep();
-              },
-              child: const Text('Continue'))
-          : ElevatedButton(
-              onPressed: () {
-                FocusScope.of(context).unfocus();
-                _handleSubmit();
-              },
-              child: const Text('Submit')),
-    );
+        width: 296,
+        child: ElevatedButton(
+            onPressed: () {
+              FocusScope.of(context).unfocus();
+              _nextStep();
+            },
+            child: Text(_step < 5 ? 'Continue' : 'Submit')));
   }
 
   Widget _buildPreviousButton() {
@@ -377,9 +417,33 @@ class _SignupFormState extends State<SignupForm> {
     );
   }
 
-  void _handleSubmit() {
-    print("state: $_addressState");
-    print("suburb: $_addressSuburb");
-    print("postcode: $_postCode");
+  void _handleSubmit() async {
+    try {
+      final request = Request();
+
+      final response = await request.post(
+          'api/Auth/RegisterByGuest',
+          {
+            'username': _usernameController.text,
+            'password': _passwordController.text,
+            'userId': _userIdController.text,
+            'dateOfBirth': _dateOfBirth?.toIso8601String(),
+            'addressDetail': _addressDetailController.text,
+            'addressState': _addressState.toString(),
+            'addressSuburb': _addressSuburb.toString(),
+            'postCode': _postCode
+          },
+          null);
+
+      if (response['StatusCode'] == 200)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Register success')));
+    } catch (e) {
+
+      ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(ErrorDetail.fromJson(jsonEncode(e)).ErrorMessage)));
+    }
+
+    //context.go('/login');
   }
 }

@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class Request {
-  final String _baseUrl = 'https://192.168.3.38:7127';
+  final String _baseUrl = 'https://172.16.1.46:7127';
 
   Request();
 
@@ -32,7 +32,7 @@ class Request {
       );
       return _handleResponse(response);
     } catch (e) {
-      throw Exception('Error occurred during POST request: $e');
+      throw e;
     }
   }
 
@@ -101,7 +101,8 @@ class Request {
       case 201:
         return jsonDecode(response.body);
       case 400:
-        throw Exception('Bad Request: ${response.body}');
+        // throw Exception('Bad Request: ${response.body}');
+        throw response.body;
       case 401:
         throw Exception('Unauthorized: ${response.body}');
       case 403:
@@ -112,5 +113,14 @@ class Request {
       default:
         throw Exception('Server Error: ${response.body}');
     }
+  }
+}
+
+class ErrorDetail {
+  int StatusCode;
+  String ErrorMessage;
+  ErrorDetail(this.StatusCode, this.ErrorMessage);
+  static ErrorDetail fromJson(String json) {
+    return jsonDecode(json);
   }
 }

@@ -19,7 +19,7 @@ class ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<UserProfileProvider>(
-      builder: (context, userProfileProvider, child) => Container(
+      builder: (context, provider, child) => Container(
         padding: const EdgeInsets.symmetric(
             horizontal: AppDefaults.padding, vertical: AppDefaults.padding),
         color: AppColors.bgSecondaryLight,
@@ -38,19 +38,30 @@ class ProfileHeader extends StatelessWidget {
               const Text("Profile",
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500)),
               Tooltip(
-                message: !userProfileProvider.editMode ? "Edit" : "Save all",
+                message: !provider.editMode ? "Edit" : "Save",
                 child: TextButton(
-                    onPressed: () {
-                      userProfileProvider.changeMode();
-                      print(userProfileProvider.editMode);
-                    },
-                    child: Icon(
-                      !userProfileProvider.editMode
-                          ? Icons.edit_square
-                          : Icons.check,
-                      color: AppColors.iconBlack,
-                    )),
-              )
+                  onPressed: () async {
+                    provider.changeMode();
+                    await provider.fetchData();
+                  },
+                  style: TextButton.styleFrom(
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                    ),
+                    foregroundColor: !provider.editMode
+                        ? AppColors.iconGrey
+                        : AppColors.success,
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Save'),
+                      SizedBox(width: 8),
+                      Icon(Icons.check),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),

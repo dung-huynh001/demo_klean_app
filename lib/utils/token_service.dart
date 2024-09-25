@@ -40,6 +40,11 @@ class TokenService {
     return null;
   }
 
+  static Future<Map<String, dynamic>?> getTokenData() async {
+    String? token = await getToken() ?? "";
+    return decodingToken(token);
+  }
+
   static bool isTokenValid(String token) {
     return decodingToken(token) != null && JwtDecoder.isExpired(token) == false;
   }

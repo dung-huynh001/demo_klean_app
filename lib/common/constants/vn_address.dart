@@ -52,6 +52,15 @@ class VNAddress {
         .toList();
   }
 
+  static String? getState(int stateId) {
+    return address.firstWhere((s) => s.id == stateId).state;
+  }
+
+  static String? getSuburb(int stateId, int suburbId) {
+    StateType st = address.firstWhere((s) => s.id == stateId);
+    return st.suburbs.firstWhere((sub) => sub.id == suburbId).name;
+  }
+
   static String? getPostCode(int stateId, int suburbId) {
     try {
       StateType st = address.firstWhere((s) => s.id == stateId);

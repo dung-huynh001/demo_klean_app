@@ -435,15 +435,17 @@ class _SignupFormState extends State<SignupForm> {
           },
           null);
 
-      if (response['StatusCode'] == 200)
+      if (response['StatusCode'] != null && response['StatusCode'] == 400) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Register success')));
+            .showSnackBar(SnackBar(content: Text(response['Message'].toString())));
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Register Successs')));
+        context.go('/login');
+      }
     } catch (e) {
-
       ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(ErrorDetail.fromJson(jsonEncode(e)).ErrorMessage)));
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
-
-    //context.go('/login');
   }
 }

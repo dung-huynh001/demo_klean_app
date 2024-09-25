@@ -12,12 +12,6 @@ class Header extends StatelessWidget {
   const Header({super.key, required this.drawerKey});
 
   final GlobalKey<ScaffoldState> drawerKey;
-  // String token;
-  // TokenService.getToken()
-  // .then((val){
-  //   token = val.toString();
-  // })
-  // .catchError(onError);
 
   @override
   Widget build(BuildContext context) {
@@ -102,28 +96,6 @@ class Header extends StatelessWidget {
                             "https://cdn.create.vista.com/api/media/small/339818716/stock-photo-doubtful-hispanic-man-looking-with-disbelief-expression"),
                       ),
                     ),
-                  // TextButton(
-                  //   onPressed: () => context.go('/login'),
-                  //   style: TextButton.styleFrom(
-                  //     foregroundColor:
-                  //     Theme.of(context).textTheme.titleLarge!.color,
-                  //     minimumSize: const Size(80, 56),
-                  //     shape: const RoundedRectangleBorder(
-                  //       borderRadius: BorderRadius.all(
-                  //         Radius.circular(AppDefaults.borderRadius),
-                  //       ),
-                  //     ),
-                  //     textStyle: const TextStyle(
-                  //       fontWeight: FontWeight.w600,
-                  //     ),
-                  //   ),
-                  //   child: const Text("Sign In"),
-                  // ),
-                  // w16,
-                  // ElevatedButton(
-                  //   onPressed: () => context.go('/register'),
-                  //   child: const Text("Sign Up"),
-                  // ),
                   UserDropdown(),
                 ],
               ),
@@ -181,9 +153,9 @@ class _UserDropdownState extends State<UserDropdown> {
             tokenData.isNotEmpty
                 ? tokenData['username']
                 : "Failed", // Tên người dùng
-            style: TextStyle(color: Colors.black),
+            style: const TextStyle(color: Colors.black),
           ),
-          Icon(Icons.arrow_drop_down, color: Colors.white),
+          const Icon(Icons.arrow_drop_down, color: Colors.white),
         ],
       ),
       items: <String>['Profile', 'Logout']
@@ -202,6 +174,7 @@ class _UserDropdownState extends State<UserDropdown> {
         switch (selectedValue) {
           case 'Profile':
             // Điều hướng đến trang Profile
+            context.push('/profile');
             break;
           case 'Logout':
             _logout(context);

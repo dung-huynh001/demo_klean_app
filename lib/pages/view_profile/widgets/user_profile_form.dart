@@ -1,25 +1,46 @@
 import 'package:KleanApp/common/constants/colors.dart';
 import 'package:KleanApp/common/constants/defaults.dart';
 import 'package:KleanApp/common/constants/sizes.dart';
+import 'package:KleanApp/common/constants/vn_address.dart';
 import 'package:KleanApp/pages/view_profile/user_profile_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class ProfileScreen extends StatelessWidget {
-  bool _editMode = false;
+class ProfileScreen extends StatefulWidget {
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
 
-  // Dữ liệu giả lập cho profile user
-  final UserProfile user = UserProfile(
-    userId: 123456,
-    username: "JohnDoe",
-    dateOfBirth: DateTime(1990, 5, 15),
-    mobile: "0123456789",
-    email: "johndoe@example.com",
-    tel: "johndoe@example.com",
-    addressState: "California",
-    addressSuburb: "San Francisco",
-    addressDetail: "123 Street Name, Apt 4B",
-  );
+class _ProfileScreenState extends State<ProfileScreen> {
+  final TextEditingController _dateOfBirthController = TextEditingController();
+  final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _telController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _addressDetailController =
+      TextEditingController();
+
+  int? _addressState;
+  int? _addressSuburb;
+  String? _postCode;
+  DateTime? _dateOfBirth;
+  List<Map<String, dynamic>>? _suburbs;
+  final List<Map<String, dynamic>> _states = VNAddress.getStates();
+
+  // State variables for validation messages
+  String? _dobError;
+  String? _emailError;
+  String? _mobileDetailError;
+  String? _telDetailError;
+  String? _addressDetailError;
+
+  @override
+  void initState() {
+    super.initState();
+    // Gọi fetchData khi UI được load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<UserProfileProvider>(context, listen: false).fetchData();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,83 +56,103 @@ class ProfileScreen extends StatelessWidget {
           children: [
             _buildProfileField('User ID', provider.userId.toString()),
             _buildProfileField('Username', provider.username),
-            _buildProfileField('Date of Birth', _formatDate(user.dateOfBirth),
+            _buildProfileField(
+                'Date of Birth', _formatDate(provider.dateOfBirth ?? DateTime.now()),
                 enableEdit: true),
-            _buildProfileField('Mobile', provider.mobile, enableEdit: true),
-            _buildProfileField('Email', provider.email, enableEdit: true),
-            _buildProfileField('Tel', provider.tel, enableEdit: true),
+            _buildProfileField('Mobile', provider.contactMobile,
+                enableEdit: true,
+                controller: _mobileController,
+                hintText: 'Enter mobile'),
+            _buildProfileField('Email', provider.contactEmail,
+                enableEdit: true,
+                controller: _emailController,
+                hintText: 'Enter email'),
+            _buildProfileField('Tel', provider.contactTel,
+                enableEdit: true,
+                controller: _telController,
+                hintText: 'Enter tel'),
             _buildProfileField('State', provider.addressState),
             _buildProfileField('Suburb', provider.addressSuburb),
             _buildProfileField('Address Detail', provider.addressDetail,
-                enableEdit: true),
+                enableEdit: true,
+                controller: _addressDetailController,
+                hintText: 'Enter address detail'),
           ],
         ),
       ),
     );
   }
 
-  // Widget để tạo các field của profile
-  Widget _buildProfileField(String label, String value,
-      {bool enableEdit = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 16.0),
-              ),
-              h4,
-              _editMode
-                  ? TextFormField()
-                  : Text(
-                      value,
-                      style: const TextStyle(fontSize: 16.0),
-                    ),
-              const Divider(),
-            ],
-          ),
-          if (enableEdit)
-            IconButton(
-                onPressed: () {},
-                color: AppColors.iconGrey,
-                icon: const Icon(Icons.edit_square))
-        ],
+  bool _isInputValid(String val, {int minLength = 8}) {
+    return val.isNotEmpty && val.length >= minLength;
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String hintText,
+    String? errorMessage,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        hintText: hintText,
+        border: const OutlineInputBorder(),
+        errorText: errorMessage,
       ),
     );
   }
 
-  // Hàm format DateTime thành chuỗi ngày tháng
+  Widget _buildProfileField(String label, String? value,
+      {bool enableEdit = false,
+      String hintText = '',
+      TextEditingController? controller,
+      String? errorMessage}) {
+    return Consumer<UserProfileProvider>(
+      builder: (context, provider, child) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16.0),
+                ),
+                const SizedBox(height: 4),
+                provider.editMode && enableEdit
+                    ? SizedBox(
+                        width: 296,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildInputField(
+                                controller:
+                                    controller ?? TextEditingController(),
+                                hintText: hintText,
+                                errorMessage: errorMessage)
+                          ],
+                        ),
+                      )
+                    : Text(
+                        value ?? "",
+                        style: const TextStyle(fontSize: 16.0),
+                      ),
+                const Divider(),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
-}
-
-class UserProfile {
-  final int userId;
-  final String username;
-  final DateTime dateOfBirth;
-  final String mobile;
-  final String email;
-  final String tel;
-  final String addressState;
-  final String addressSuburb;
-  final String addressDetail;
-
-  UserProfile({
-    required this.userId,
-    required this.username,
-    required this.dateOfBirth,
-    required this.mobile,
-    required this.email,
-    required this.tel,
-    required this.addressState,
-    required this.addressSuburb,
-    required this.addressDetail,
-  });
 }

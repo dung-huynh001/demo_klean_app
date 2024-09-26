@@ -52,12 +52,12 @@ class ProfileHeader extends StatelessWidget {
                         ? AppColors.iconGrey
                         : AppColors.success,
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Save'),
-                      SizedBox(width: 8),
-                      Icon(Icons.check),
+                      Text(provider.editMode ? 'Save' : 'Edit') ,
+                      const SizedBox(width: 8),
+                      Icon(provider.editMode ? Icons.check : Icons.edit_square),
                     ],
                   ),
                 ),

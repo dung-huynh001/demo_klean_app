@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class Request {
-  final String _baseUrl = 'https://192.168.3.38:7127';
+  final String _baseUrl = 'https://172.16.1.46:7127';
 
   Request();
 

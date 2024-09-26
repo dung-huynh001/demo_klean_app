@@ -64,7 +64,7 @@ class Sidebar extends StatelessWidget {
                     ),
                     ExpansionTile(
                       leading:
-                      SvgPicture.asset("assets/icons/diamond_light.svg"),
+                          SvgPicture.asset("assets/icons/diamond_light.svg"),
                       title: Text(
                         "Products",
                         style: TextStyle(
@@ -130,60 +130,6 @@ class Sidebar extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppDefaults.padding),
-              child: Column(
-                children: [
-                  if (Responsive.isMobile(context))
-                    const CustomerInfo(
-                      name: 'Tran Mau Tri Tam',
-                      designation: 'Visual Designer',
-                      imageSrc:
-                      'https://cdn.create.vista.com/api/media/small/339818716/stock-photo-doubtful-hispanic-man-looking-with-disbelief-expression',
-                    ),
-                  h8,
-                  const Divider(),
-                  h8,
-                  Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/help_light.svg',
-                        height: 24,
-                        width: 24,
-                        colorFilter: const ColorFilter.mode(
-                          AppColors.textLight,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                      w8,
-                      Text(
-                        'Help & getting started',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      const Spacer(),
-                      Chip(
-                        backgroundColor: AppColors.secondaryLavender,
-                        side: BorderSide.none,
-                        padding: const EdgeInsets.symmetric(horizontal: 0.5),
-                        label: Text(
-                          "8",
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelMedium!
-                              .copyWith(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ],
-                  ),
-                  h20,
-                  const ThemeTabs(),
-                  h8,
-                ],
               ),
             ),
           ],

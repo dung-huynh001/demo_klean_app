@@ -14,13 +14,62 @@ class UserProfileProvider with ChangeNotifier {
   String? addressState;
   String? addressSuburb;
   String? addressDetail;
+  String? postCode;
   bool editMode = false;
+  bool isAddressChanged = false;
+
+  late TextEditingController dateOfBirthController;
+  late TextEditingController mobileController;
+  late TextEditingController telController;
+  late TextEditingController emailController;
+  late TextEditingController addressDetailController;
+
+  void initEditorController() {
+    dateOfBirthController =
+        TextEditingController(text: _formatDate(dateOfBirth ?? DateTime.now()));
+    mobileController = TextEditingController(text: contactMobile);
+    telController = TextEditingController(text: contactTel);
+    emailController = TextEditingController(text: contactEmail);
+    addressDetailController = TextEditingController(text: addressDetail);
+  }
+
+  final List<Map<String, dynamic>> _states = VNAddress.getStates();
+  List<Map<String, dynamic>>? _suburbs;
 
   final request = Request();
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
 
   void changeMode() {
     editMode = !editMode;
     notifyListeners();
+  }
+
+  void enableEditMode() {
+    editMode = true;
+    notifyListeners();
+  }
+
+  void SaveAll() {
+    editMode = false;
+    isAddressChanged = false;
+    notifyListeners();
+  }
+
+  List<DropdownMenuItem<Object>>? initStates() {
+    return _states
+        .map((state) =>
+            DropdownMenuItem(value: state['id'], child: Text(state['state'])))
+        .toList();
+  }
+
+  List<DropdownMenuItem<Object>>? initSuburbs() {
+    return _suburbs
+        ?.map((suburb) =>
+            DropdownMenuItem(value: suburb['id'], child: Text(suburb['name'])))
+        .toList();
   }
 
   Future<dynamic> fetchData() async {
@@ -30,17 +79,36 @@ class UserProfileProvider with ChangeNotifier {
 
     dynamic response = await request.get("api/Profile/GetProfile/$uId", token)
         as Map<String, dynamic>;
-    print(response);
     userId = uId;
     username = response['username'];
     dateOfBirth = DateTime.parse(response['dateOfBirth']);
     contactMobile = response['contactMobile'] ?? "";
     contactTel = response['contactTel'] ?? "";
     contactEmail = response['contactEmail'] ?? "";
-    addressState = VNAddress.getState(int.parse(response['addressState'])) ?? "";
-    addressSuburb = VNAddress.getState(int.parse(response['addressSuburb'])) ?? "";
+    addressState = response['addressState'];
+    addressSuburb = response['addressSuburb'];
     addressDetail = response['addressDetail']?.toString() ?? "";
+    postCode = response['postCode']?.toString() ?? "";
+    if (addressState != null) {
+      _suburbs = VNAddress.getSuburbs(int.parse(addressState ?? ""));
+    }
 
+    notifyListeners();
+  }
+
+  handleStateChange(val) {
+    addressState = val.toString();
+    _suburbs = VNAddress.getSuburbs(int.parse(addressState.toString()));
+    addressSuburb = null;
+    isAddressChanged = true;
+    notifyListeners();
+  }
+
+  handleSuburbChange(val) {
+    addressSuburb = val.toString();
+    postCode = VNAddress.getPostCode(int.parse(addressState.toString()),
+        int.parse(addressSuburb.toString()));
+    isAddressChanged = true;
     notifyListeners();
   }
 

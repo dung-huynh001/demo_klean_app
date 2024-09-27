@@ -4,6 +4,7 @@ import 'package:KleanApp/common/constants/sizes.dart';
 import 'package:KleanApp/common/constants/vn_address.dart';
 import 'package:KleanApp/pages/view_profile/user_profile_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -12,12 +13,11 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final TextEditingController _dateOfBirthController = TextEditingController();
-  final TextEditingController _mobileController = TextEditingController();
-  final TextEditingController _telController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _addressDetailController =
-      TextEditingController();
+  late TextEditingController _dateOfBirthController = TextEditingController();
+  late TextEditingController _mobileController = TextEditingController();
+  late TextEditingController _telController = TextEditingController();
+  late TextEditingController _emailController = TextEditingController();
+  late TextEditingController _addressDetailController = TextEditingController();
 
   int? _addressState;
   int? _addressSuburb;
@@ -36,9 +36,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Gọi fetchData khi UI được load
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<UserProfileProvider>(context, listen: false).fetchData();
+      final provider = Provider.of<UserProfileProvider>(context, listen: false);
+      provider.fetchData();
+      setState(() {});
     });
   }
 
@@ -56,8 +57,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             _buildProfileField('User ID', provider.userId.toString()),
             _buildProfileField('Username', provider.username),
-            _buildProfileField(
-                'Date of Birth', _formatDate(provider.dateOfBirth ?? DateTime.now()),
+            _buildDOBField("Date of Birth",
+                _formatDate(provider.dateOfBirth ?? DateTime.now()),
                 enableEdit: true),
             _buildProfileField('Mobile', provider.contactMobile,
                 enableEdit: true,
@@ -71,8 +72,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 enableEdit: true,
                 controller: _telController,
                 hintText: 'Enter tel'),
-            _buildProfileField('State', provider.addressState),
-            _buildProfileField('Suburb', provider.addressSuburb),
+            // _buildProfileField('State', provider.addressState),
+            // _buildProfileField('Suburb', provider.addressSuburb),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "State",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),
+                ),
+                h4,
+                DropdownButton(
+                  value: provider.addressState != null
+                      ? int.parse(provider.addressState!)
+                      : null,
+                  isExpanded: true,
+                  hint: const Text("Select state"),
+                  icon: const Icon(Icons.location_on),
+                  items: provider.initStates(),
+                  onChanged: (val) {
+                    provider.handleStateChange(val);
+                  },
+                ),
+                const Divider(),
+              ],
+            ),
+
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Suburb",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),
+                ),
+                h4,
+                DropdownButton(
+                  value: provider.addressSuburb != null
+                      ? int.parse(provider.addressSuburb!)
+                      : null,
+                  isExpanded: true,
+                  hint: const Text("Select suburb"),
+                  icon: const Icon(Icons.location_on),
+                  items: provider.initSuburbs(),
+                  onChanged: (val) {
+                    provider.handleSuburbChange(val);
+                  },
+                ),
+                const Divider(),
+              ],
+            ),
             _buildProfileField('Address Detail', provider.addressDetail,
                 enableEdit: true,
                 controller: _addressDetailController,
@@ -85,6 +133,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isInputValid(String val, {int minLength = 8}) {
     return val.isNotEmpty && val.length >= minLength;
+  }
+
+  Widget _buildDOBField(String label, String? value,
+      {bool enableEdit = false,
+      String hintText = '',
+      TextEditingController? controller,
+      String? errorMessage}) {
+    return Consumer<UserProfileProvider>(
+      builder: (context, provider, child) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16.0),
+                ),
+                const SizedBox(height: 4),
+                provider.editMode && enableEdit
+                    ? SizedBox(
+                        width: 296,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextFormField(
+                              controller: _dateOfBirthController,
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                hintText: 'Select your date of birth',
+                                errorText: _dobError,
+                                suffixIcon: const Icon(Icons.calendar_today),
+                                border: const OutlineInputBorder(),
+                              ),
+                              onTap: () => _pickDOB(context),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Text(
+                        value ?? "",
+                        style: const TextStyle(fontSize: 16.0),
+                      ),
+                const Divider(),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickDOB(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _dateOfBirth) {
+      setState(() {
+        _dateOfBirth = picked;
+        _dateOfBirthController.text = DateFormat('yyyy/MM/dd').format(picked);
+      });
+    }
   }
 
   Widget _buildInputField({

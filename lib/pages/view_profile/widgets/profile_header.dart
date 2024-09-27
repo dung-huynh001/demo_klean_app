@@ -38,26 +38,34 @@ class ProfileHeader extends StatelessWidget {
               const Text("Profile",
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500)),
               Tooltip(
-                message: !provider.editMode ? "Edit" : "Save",
+                message: !provider.editMode || !provider.isAddressChanged
+                    ? "Edit"
+                    : "Save",
                 child: TextButton(
                   onPressed: () async {
-                    provider.changeMode();
-                    await provider.fetchData();
+                    provider.editMode || provider.isAddressChanged
+                        ? provider.SaveAll()
+                        : provider.enableEditMode();
                   },
                   style: TextButton.styleFrom(
                     textStyle: const TextStyle(
                       fontSize: 18,
                     ),
-                    foregroundColor: !provider.editMode
-                        ? AppColors.iconGrey
-                        : AppColors.success,
+                    foregroundColor:
+                        !provider.editMode && !provider.isAddressChanged
+                            ? AppColors.iconGrey
+                            : AppColors.success,
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(provider.editMode ? 'Save' : 'Edit') ,
+                      Text(provider.editMode || provider.isAddressChanged
+                          ? 'Save'
+                          : 'Edit'),
                       const SizedBox(width: 8),
-                      Icon(provider.editMode ? Icons.check : Icons.edit_square),
+                      Icon(provider.editMode || provider.isAddressChanged
+                          ? Icons.check
+                          : Icons.edit_square),
                     ],
                   ),
                 ),

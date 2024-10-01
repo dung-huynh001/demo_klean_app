@@ -34,24 +34,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
               BorderRadius.all(Radius.circular(AppDefaults.borderRadius)),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.max,
           children: [
-            _buildProfileField('User ID', provider.userId.toString()),
-            _buildProfileField('Username', provider.username),
+            _buildProfileField('User ID', provider.userId.toString(),
+                handleChanged: () {}),
+            _buildProfileField('Username', provider.username,
+                handleChanged: () {}),
             _buildDOBField("Date of Birth",
                 _formatDate(provider.dateOfBirth ?? DateTime.now()),
                 enableEdit: true),
             _buildProfileField('Mobile', provider.contactMobile,
                 enableEdit: true,
                 controller: provider.mobileController,
-                hintText: 'Enter mobile'),
+                keyboardType: TextInputType.number,
+                hintText: 'Enter mobile', handleChanged: (val) {
+              provider.contactMobile = val;
+              print(val);
+            }),
             _buildProfileField('Email', provider.contactEmail,
                 enableEdit: true,
                 controller: provider.emailController,
-                hintText: 'Enter email'),
+                keyboardType: TextInputType.emailAddress,
+                hintText: 'Enter email', handleChanged: (val) {
+              provider.contactEmail = val;
+            }),
             _buildProfileField('Tel', provider.contactTel,
                 enableEdit: true,
                 controller: provider.telController,
-                hintText: 'Enter tel'),
+                hintText: 'Enter tel', handleChanged: (val) {
+              provider.contactTel = val;
+            }),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -83,6 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 const Text(
                   "Suburb",
@@ -113,7 +126,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildProfileField('Address Detail', provider.addressDetail,
                 enableEdit: true,
                 controller: provider.addressDetailController,
-                hintText: 'Enter address detail'),
+                errorMessage: provider.addressDetailError,
+                hintText: 'Enter address detail', handleChanged: (val) {
+              provider.addressDetail = val;
+            }),
           ],
         ),
       ),
@@ -156,7 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 suffixIcon: const Icon(Icons.calendar_today),
                                 border: const OutlineInputBorder(),
                               ),
-                              onTap: () => _pickDOB(context),
+                              onTap: () => provider.pickDOB(context),
                             ),
                           ],
                         ),
@@ -181,25 +197,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-    if (picked != null &&
-        picked != Provider.of<UserProfileProvider>(context).dateOfBirth) {
-      setState(() {
-        Provider.of<UserProfileProvider>(context).dateOfBirth = picked;
-        Provider.of<UserProfileProvider>(context).dateOfBirthController.text =
-            DateFormat('yyyy/MM/dd').format(picked);
-      });
+    UserProfileProvider provider = Provider.of<UserProfileProvider>(context);
+
+    if (picked != null && picked != provider.dateOfBirth) {
+      provider.dateOfBirth = picked;
+      provider.dateOfBirthController.text =
+          DateFormat('yyyy/MM/dd').format(picked);
     }
   }
 
-  Widget _buildInputField({
-    required TextEditingController controller,
-    required String hintText,
-    String? errorMessage,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
+  Widget _buildInputField(
+      {required TextEditingController controller,
+      required String hintText,
+      String? errorMessage,
+      TextInputType keyboardType = TextInputType.text,
+      required Function handleChanged}) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      onChanged: (val) {
+        handleChanged(val);
+      },
       decoration: InputDecoration(
         hintText: hintText,
         border: const OutlineInputBorder(),
@@ -212,7 +230,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       {bool enableEdit = false,
       String hintText = '',
       TextEditingController? controller,
-      String? errorMessage}) {
+      String? errorMessage,
+      required Function handleChanged,
+      TextInputType keyboardType = TextInputType.text}) {
     return Consumer<UserProfileProvider>(
       builder: (context, provider, child) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -236,10 +256,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             _buildInputField(
-                                controller:
-                                    controller ?? TextEditingController(),
-                                hintText: hintText,
-                                errorMessage: errorMessage)
+                              controller: controller ?? TextEditingController(),
+                              hintText: hintText,
+                              errorMessage: errorMessage,
+                              handleChanged: handleChanged,
+                              keyboardType: keyboardType
+                            )
                           ],
                         ),
                       )

@@ -3,6 +3,7 @@ import 'package:KleanApp/pages/view_profile/widgets/user_profile_form.dart';
 import 'package:KleanApp/utils/request.dart';
 import 'package:KleanApp/utils/token_service.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class UserProfileProvider with ChangeNotifier {
   int? userId;
@@ -130,7 +131,7 @@ class UserProfileProvider with ChangeNotifier {
     }
 
     if (addressDetailController.text.isEmpty) {
-      addressSuburbError = "Address detail is required";
+      addressDetailError = "Address detail is required";
       return;
     }
     contactMobile = mobileController.text;
@@ -138,7 +139,22 @@ class UserProfileProvider with ChangeNotifier {
 
     addressDetail = addressDetailController.text;
     print(
-        '$contactMobile $contactTel $addressState $addressSuburb $addressDetail');
+        '$dateOfBirth $contactMobile $contactTel $addressState $addressSuburb $addressDetail');
+  }
+
+  Future<void> pickDOB(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null && picked != dateOfBirth) {
+      dateOfBirth = picked;
+      dateOfBirthController.text =
+          DateFormat('yyyy/MM/dd').format(picked);
+    }
   }
 
   bool _isInputValid(String val, {int minLength = 8}) {

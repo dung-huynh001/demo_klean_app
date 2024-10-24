@@ -38,12 +38,13 @@ class ProfileHeader extends StatelessWidget {
               const Text("Profile",
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500)),
               Tooltip(
-                message: !provider.editMode || !provider.isAddressChanged
+                message: !provider.editMode
                     ? "Edit"
                     : "Save",
                 child: TextButton(
                   onPressed: () async {
-                    provider.editMode || provider.isAddressChanged
+                    provider.initEditorController();
+                    provider.editMode
                         ? provider.SaveAll()
                         : provider.enableEditMode();
                   },
@@ -52,18 +53,18 @@ class ProfileHeader extends StatelessWidget {
                       fontSize: 18,
                     ),
                     foregroundColor:
-                        !provider.editMode && !provider.isAddressChanged
+                        !provider.editMode
                             ? AppColors.iconGrey
                             : AppColors.success,
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(provider.editMode || provider.isAddressChanged
+                      Text(provider.editMode
                           ? 'Save'
                           : 'Edit'),
                       const SizedBox(width: 8),
-                      Icon(provider.editMode || provider.isAddressChanged
+                      Icon(provider.editMode
                           ? Icons.check
                           : Icons.edit_square),
                     ],

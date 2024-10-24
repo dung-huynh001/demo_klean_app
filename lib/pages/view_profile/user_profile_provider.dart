@@ -3,6 +3,7 @@ import 'package:KleanApp/pages/view_profile/widgets/user_profile_form.dart';
 import 'package:KleanApp/utils/request.dart';
 import 'package:KleanApp/utils/token_service.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class UserProfileProvider with ChangeNotifier {
   int? userId;
@@ -16,21 +17,25 @@ class UserProfileProvider with ChangeNotifier {
   String? addressDetail;
   String? postCode;
   bool editMode = false;
-  bool isAddressChanged = false;
 
-  late TextEditingController dateOfBirthController;
-  late TextEditingController mobileController;
-  late TextEditingController telController;
-  late TextEditingController emailController;
-  late TextEditingController addressDetailController;
+  late TextEditingController dateOfBirthController = TextEditingController();
+  late TextEditingController mobileController = TextEditingController();
+  late TextEditingController telController = TextEditingController();
+  late TextEditingController emailController = TextEditingController();
+  late TextEditingController addressDetailController = TextEditingController();
+
+  String? dobError;
+  String? addressStateError;
+  String? addressSuburbError;
+  String? addressDetailError;
 
   void initEditorController() {
     dateOfBirthController =
         TextEditingController(text: _formatDate(dateOfBirth ?? DateTime.now()));
-    mobileController = TextEditingController(text: contactMobile);
-    telController = TextEditingController(text: contactTel);
-    emailController = TextEditingController(text: contactEmail);
-    addressDetailController = TextEditingController(text: addressDetail);
+    mobileController = TextEditingController(text: contactMobile ?? "");
+    telController = TextEditingController(text: contactTel ?? "");
+    emailController = TextEditingController(text: contactEmail ?? "");
+    addressDetailController = TextEditingController(text: addressDetail ?? "");
   }
 
   final List<Map<String, dynamic>> _states = VNAddress.getStates();
@@ -54,7 +59,7 @@ class UserProfileProvider with ChangeNotifier {
 
   void SaveAll() {
     editMode = false;
-    isAddressChanged = false;
+    updateProfile1();
     notifyListeners();
   }
 
@@ -100,7 +105,6 @@ class UserProfileProvider with ChangeNotifier {
     addressState = val.toString();
     _suburbs = VNAddress.getSuburbs(int.parse(addressState.toString()));
     addressSuburb = null;
-    isAddressChanged = true;
     notifyListeners();
   }
 
@@ -108,25 +112,70 @@ class UserProfileProvider with ChangeNotifier {
     addressSuburb = val.toString();
     postCode = VNAddress.getPostCode(int.parse(addressState.toString()),
         int.parse(addressSuburb.toString()));
-    isAddressChanged = true;
     notifyListeners();
   }
 
-  // Hàm cập nhật thông tin người dùng và thông báo cho các listeners
+  void updateProfile1() {
+    dobError = null;
+    addressStateError = null;
+    addressSuburbError = null;
+    addressDetailError = null;
+
+    if (addressState == null || addressState!.isEmpty) {
+      addressStateError = "State is required";
+      return;
+    }
+    if (addressSuburb == null || addressSuburb!.isEmpty) {
+      addressSuburbError = "Suburb is required";
+      return;
+    }
+
+    if (addressDetailController.text.isEmpty) {
+      addressDetailError = "Address detail is required";
+      return;
+    }
+    contactMobile = mobileController.text;
+    contactTel = telController.text;
+
+    addressDetail = addressDetailController.text;
+    print(
+        '$dateOfBirth $contactMobile $contactTel $addressState $addressSuburb $addressDetail');
+  }
+
+  Future<void> pickDOB(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null && picked != dateOfBirth) {
+      dateOfBirth = picked;
+      dateOfBirthController.text =
+          DateFormat('yyyy/MM/dd').format(picked);
+    }
+  }
+
+  bool _isInputValid(String val, {int minLength = 8}) {
+    return val.isNotEmpty && val.length >= minLength;
+  }
+
   void updateProfile({
-    required String username,
     required String mobile,
     required String email,
     required String addressState,
     required String addressSuburb,
     required String addressDetail,
   }) {
-    username = username;
     contactMobile = mobile;
     contactTel = email;
     addressState = addressState;
     addressSuburb = addressSuburb;
     addressDetail = addressDetail;
+
+    print(
+        '$contactMobile $contactTel $addressState $addressSuburb $addressDetail');
 
     changeMode();
 

@@ -1,4 +1,5 @@
 import 'package:KleanApp/Utils/token_service.dart';
+import 'package:KleanApp/pages/view_profile/user_profile_provider.dart';
 import 'package:KleanApp/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -7,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:KleanApp/common/constants/colors.dart';
 import 'package:KleanApp/common/constants/sizes.dart';
 import 'package:KleanApp/common/constants/defaults.dart';
+import 'package:provider/provider.dart';
 
 class Header extends StatelessWidget {
   const Header({super.key, required this.drawerKey});
@@ -170,10 +172,8 @@ class _UserDropdownState extends State<UserDropdown> {
           selectedValue = newValue!;
         });
 
-        // Xử lý các lựa chọn trong dropdown
         switch (selectedValue) {
           case 'Profile':
-            // Điều hướng đến trang Profile
             context.push('/profile');
             break;
           case 'Logout':

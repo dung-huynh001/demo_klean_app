@@ -13,26 +13,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  late TextEditingController _dateOfBirthController = TextEditingController();
-  late TextEditingController _mobileController = TextEditingController();
-  late TextEditingController _telController = TextEditingController();
-  late TextEditingController _emailController = TextEditingController();
-  late TextEditingController _addressDetailController = TextEditingController();
-
-  int? _addressState;
-  int? _addressSuburb;
-  String? _postCode;
-  DateTime? _dateOfBirth;
-  List<Map<String, dynamic>>? _suburbs;
-  final List<Map<String, dynamic>> _states = VNAddress.getStates();
-
-  // State variables for validation messages
-  String? _dobError;
-  String? _emailError;
-  String? _mobileDetailError;
-  String? _telDetailError;
-  String? _addressDetailError;
-
   @override
   void initState() {
     super.initState();
@@ -54,26 +34,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
               BorderRadius.all(Radius.circular(AppDefaults.borderRadius)),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.max,
           children: [
-            _buildProfileField('User ID', provider.userId.toString()),
-            _buildProfileField('Username', provider.username),
+            _buildProfileField('User ID', provider.userId.toString(),
+                handleChanged: () {}),
+            _buildProfileField('Username', provider.username,
+                handleChanged: () {}),
             _buildDOBField("Date of Birth",
                 _formatDate(provider.dateOfBirth ?? DateTime.now()),
                 enableEdit: true),
             _buildProfileField('Mobile', provider.contactMobile,
                 enableEdit: true,
-                controller: _mobileController,
-                hintText: 'Enter mobile'),
+                controller: provider.mobileController,
+                keyboardType: TextInputType.number,
+                hintText: 'Enter mobile', handleChanged: (val) {
+              provider.contactMobile = val;
+              print(val);
+            }),
             _buildProfileField('Email', provider.contactEmail,
                 enableEdit: true,
-                controller: _emailController,
-                hintText: 'Enter email'),
+                controller: provider.emailController,
+                keyboardType: TextInputType.emailAddress,
+                hintText: 'Enter email', handleChanged: (val) {
+              provider.contactEmail = val;
+            }),
             _buildProfileField('Tel', provider.contactTel,
                 enableEdit: true,
-                controller: _telController,
-                hintText: 'Enter tel'),
-            // _buildProfileField('State', provider.addressState),
-            // _buildProfileField('Suburb', provider.addressSuburb),
+                controller: provider.telController,
+                hintText: 'Enter tel', handleChanged: (val) {
+              provider.contactTel = val;
+            }),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -94,12 +84,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     provider.handleStateChange(val);
                   },
                 ),
+                if (provider.addressStateError != null &&
+                    provider.addressStateError!.isNotEmpty)
+                  Text(
+                    provider.addressStateError!,
+                    style: const TextStyle(color: AppColors.error),
+                  ),
                 const Divider(),
               ],
             ),
-
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 const Text(
                   "Suburb",
@@ -118,21 +114,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     provider.handleSuburbChange(val);
                   },
                 ),
+                if (provider.addressSuburbError != null &&
+                    provider.addressSuburbError!.isNotEmpty)
+                  Text(
+                    provider.addressSuburbError!,
+                    style: const TextStyle(color: AppColors.error),
+                  ),
                 const Divider(),
               ],
             ),
             _buildProfileField('Address Detail', provider.addressDetail,
                 enableEdit: true,
-                controller: _addressDetailController,
-                hintText: 'Enter address detail'),
+                controller: provider.addressDetailController,
+                errorMessage: provider.addressDetailError,
+                hintText: 'Enter address detail', handleChanged: (val) {
+              provider.addressDetail = val;
+            }),
           ],
         ),
       ),
     );
-  }
-
-  bool _isInputValid(String val, {int minLength = 8}) {
-    return val.isNotEmpty && val.length >= minLength;
   }
 
   Widget _buildDOBField(String label, String? value,
@@ -163,15 +164,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             TextFormField(
-                              controller: _dateOfBirthController,
+                              controller: provider.dateOfBirthController,
                               readOnly: true,
                               decoration: InputDecoration(
                                 hintText: 'Select your date of birth',
-                                errorText: _dobError,
+                                errorText: provider.dobError,
                                 suffixIcon: const Icon(Icons.calendar_today),
                                 border: const OutlineInputBorder(),
                               ),
-                              onTap: () => _pickDOB(context),
+                              onTap: () => provider.pickDOB(context),
                             ),
                           ],
                         ),
@@ -196,23 +197,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-    if (picked != null && picked != _dateOfBirth) {
-      setState(() {
-        _dateOfBirth = picked;
-        _dateOfBirthController.text = DateFormat('yyyy/MM/dd').format(picked);
-      });
+    UserProfileProvider provider = Provider.of<UserProfileProvider>(context);
+
+    if (picked != null && picked != provider.dateOfBirth) {
+      provider.dateOfBirth = picked;
+      provider.dateOfBirthController.text =
+          DateFormat('yyyy/MM/dd').format(picked);
     }
   }
 
-  Widget _buildInputField({
-    required TextEditingController controller,
-    required String hintText,
-    String? errorMessage,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
+  Widget _buildInputField(
+      {required TextEditingController controller,
+      required String hintText,
+      String? errorMessage,
+      TextInputType keyboardType = TextInputType.text,
+      required Function handleChanged}) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      onChanged: (val) {
+        handleChanged(val);
+      },
       decoration: InputDecoration(
         hintText: hintText,
         border: const OutlineInputBorder(),
@@ -225,7 +230,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       {bool enableEdit = false,
       String hintText = '',
       TextEditingController? controller,
-      String? errorMessage}) {
+      String? errorMessage,
+      required Function handleChanged,
+      TextInputType keyboardType = TextInputType.text}) {
     return Consumer<UserProfileProvider>(
       builder: (context, provider, child) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -249,10 +256,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             _buildInputField(
-                                controller:
-                                    controller ?? TextEditingController(),
-                                hintText: hintText,
-                                errorMessage: errorMessage)
+                              controller: controller ?? TextEditingController(),
+                              hintText: hintText,
+                              errorMessage: errorMessage,
+                              handleChanged: handleChanged,
+                              keyboardType: keyboardType
+                            )
                           ],
                         ),
                       )
